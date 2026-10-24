@@ -1,9 +1,10 @@
 import { ARTICLES, type Article } from './content'
 import { supabase } from '../lib/supabase'
 
-// Every article the notebook shows: the ones published to the Supabase `articles` table (newest first), then
-// the ones written into content.ts. Publishing goes through the database's publish_article() function, which
-// checks the passcode server-side (see supabase/schema.sql).
+// Every article the notebook shows: the ones written into content.ts, then the ones published to the Supabase
+// `articles` table, oldest first, so a new article always goes to the end. Publishing goes through the database's
+// publish_article() function, which checks the passcode
+// server-side (see supabase/schema.sql).
 
 const isArticle = (a: unknown): a is Article =>
   !!a && typeof a === 'object' &&
@@ -15,7 +16,7 @@ let remote: Article[] = []
 let list: Article[] = ARTICLES
 const listeners = new Set<() => void>()
 const changed = () => {
-  list = [...remote, ...ARTICLES]
+  list = [...ARTICLES, ...remote]
   listeners.forEach((fn) => fn())
 }
 
@@ -34,7 +35,7 @@ export const library = {
     const { data, error } = await supabase
       .from('articles')
       .select('id, title_ar, content_ar, title_tr, content_tr')
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: true }) // oldest first: the first article stays the first
     if (error) {
       console.warn('[articles] could not load from Supabase:', error.message)
       return
@@ -60,7 +61,7 @@ export const library = {
     const res = data as { ok: boolean; error?: PublishResult; article?: unknown }
     if (!res.ok || !isArticle(res.article)) return res.error ?? 'network'
     const article = toArticle(res.article)
-    remote = [article, ...remote.filter((a) => a.id !== article.id)]
+    remote = [...remote.filter((a) => a.id !== article.id), article]
     library.lastAdded = article.id
     changed()
     return 'ok'

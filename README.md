@@ -1,6 +1,6 @@
 <div align="center">
 
-# دفتر الأفكار · Düşünce Defteri
+# أفكاري · Düşüncelerim
 
 **A photorealistic 3D writer's study that doubles as a bilingual philosophy blog.**
 Scroll to walk up to the desk, then read the articles as pages of a real notebook.
